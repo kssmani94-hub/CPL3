@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+{% block title %}Create User{% endblock %}
+
+{# Set active page variable for layout #}
+{% set active_page = 'create_user' %} {# Or keep as 'dashboard' if preferred #}
+
+{% block content %}
+<div class="main-container">
+    <h2 class="page-title">Create New User</h2>
+
+    <div class="login-form-container">
+        <h3>Enter User Details</h3>
+
+        <form class="login-form" method="POST" action="{{ url_for('create_user') }}">
+
+            <div class="form-group">
+                <label for="full_name">Full Name</label>
+                <input type="text" id="full_name" name="full_name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select id="role" name="role" class="form-select">
+                    {# Admins can only create Captains #}
+                    {% if current_user.role == 'Admin' %}
+                        <option value="Captain">Captain</option>
+                    {# Super Admins can create all types #}
+                    {% elif current_user.role == 'Super Admin' %}
+                        <option value="Captain">Captain</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Super Admin">Super Admin</option>
+                    {% endif %}
+                </select>
+            </div>
+
+            {# Show Team dropdown only if Super Admin is creating or Admin is creating (implicitly Captain) #}
+            {# Use JavaScript to show/hide based on selection for Super Admin #}
+            <div class="form-group" id="team_select_group" style="display: {% if current_user.role == 'Admin' %}block{% else %}none{% endif %};">
+                <label for="team_id">Assign to Team (only applies if Role is Captain)</label>
+                <select id="team_id" name="team_id" class="form-select">
+                    <option value="">None</option> {# Option to assign no team initially #}
+                    {% for team in teams %}
+                        <option value="{{ team.id }}">{{ team.team_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="login-btn"><i class="fas fa-user-plus"></i> Create User</button>
+            <a href="{{ url_for('dashboard') }}" class="cancel-link">Cancel</a>
+        </form>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{# Add JavaScript to show/hide Team dropdown based on Role selection (only if Super Admin) #}
+{% if current_user.role == 'Super Admin' %}
+<script>
+    const roleSelect = document.getElementById('role');
+    const teamGroup = document.getElementById('team_select_group');
+
+    function toggleTeamSelect() {
+        if (roleSelect.value === 'Captain') {
+            teamGroup.style.display = 'block';
+        } else {
+            teamGroup.style.display = 'none';
+        }
+    }
+    // Run on page load in case of errors/reloads
+    toggleTeamSelect();
+    // Run when role changes
+    roleSelect.addEventListener('change', toggleTeamSelect);
+</script>
+{% endif %}
+{% endblock %}

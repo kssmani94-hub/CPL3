@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{# Set active page variable for layout #}
+{% set active_page = 'dashboard' %}
+
+{% block content %}
+<div class="main-container">
+    <h2 class="page-title">Welcome, {{ current_user.full_name }} ({{ current_user.role }})</h2>
+
+    {# --- Super Admin: User Management --- #}
+    {% if current_user.role == 'Super Admin' %}
+    <div class="dashboard-card">
+        <h3>User Management</h3>
+        <a href="{{ url_for('create_user') }}" class="btn create-user-btn" style="margin-bottom: 15px;"><i class="fas fa-plus"></i> Create New User</a>
+        <div class="table-container" style="box-shadow: none;"> {# Reuse table container style #}
+            <table class="user-management-table">
+                <thead>
+                    <tr>
+                        <th>Full Name</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Team</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in all_users %}
+                    <tr>
+                        <td>{{ user.full_name }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.role }}</td>
+                        <td>{{ user.team.team_name if user.team else '-' }}</td>
+                        <td>
+                             <a href="{{ url_for('edit_user', user_id=user.id) }}" class="edit-btn">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}"
+                                  onsubmit="return confirm('Are you sure you want to delete user {{ user.username }}? This cannot be undone.');"
+                                  style="display: inline;">
+                                <button type="submit" class="delete-btn">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; font-style: italic; color: #888;">No other users found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# --- Admin: Create User Link (Show only if not Super Admin) --- #}
+    {% elif current_user.role == 'Admin' %}
+     <div class="dashboard-card">
+        <h3>Admin Tools</h3>
+         <ul class="dashboard-links">
+             <li><a href="{{ url_for('create_user') }}">Create New Captain User</a></li>
+             <li><a href="{{ url_for('auctions') }}">Conduct Auction</a></li>
+         </ul>
+     </div>
+
+    {# --- Captain: Basic Links (Should not see dashboard, but kept for completeness if needed) --- #}
+    {% elif current_user.role == 'Captain' %}
+    <div class="dashboard-card">
+        <h3>Captain Tools</h3>
+         <ul class="dashboard-links">
+             <li><a href="{{ url_for('players') }}">View All Players</a></li>
+             <li><a href="{{ url_for('teams') }}">View Teams & Players</a></li>
+         </ul>
+     </div>
+    {% endif %}
+
+</div>
+{% endblock %}

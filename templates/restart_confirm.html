@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block title %}Confirm Auction Reset{% endblock %}
+
+{# Set active page variable for layout #}
+{% set active_page = 'auctions' %} {# Keep auction highlighted #}
+
+{% block content %}
+<div class="main-container">
+    <div class="login-form-container">
+        <h3>Confirm Auction Reset</h3>
+        <p style="text-align: center; color: #dc3545; font-weight: bold;">
+            WARNING: This will reset non-retained player statuses and all team purses/counts. Retained players will remain. This action cannot be undone.
+        </p>
+        <form class="login-form" method="POST" action="{{ url_for('restart_auction') }}">
+            <div class="form-group">
+                <label for="password">Enter Your Admin Password to Confirm</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="login-btn unsold-btn" style="background-color: #dc3545;">Confirm Reset Auction</button>
+            <a href="{{ url_for('auctions') }}" class="cancel-link">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

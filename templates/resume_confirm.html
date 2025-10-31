@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block title %}Confirm Auction Resume{% endblock %}
+
+{# Set active page variable for layout #}
+{% set active_page = 'auctions' %} {# Keep auction highlighted #}
+
+{% block content %}
+<div class="main-container">
+    <div class="login-form-container">
+        <h3>Resume Auction</h3>
+        <p style="text-align: center;">
+           Please enter your admin password to resume the auction.
+        </p>
+        <form class="login-form" method="POST" action="{{ url_for('resume_auction') }}">
+            <div class="form-group">
+                <label for="password">Enter Your Admin Password to Confirm</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="login-btn sold-btn" style="background-color: #28a745;">Confirm Resume Auction</button>
+            <a href="{{ url_for('auctions') }}" class="cancel-link">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

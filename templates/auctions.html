@@ -1,0 +1,210 @@
+{% extends "layout.html" %}
+{% block title %}CPL 2025 - Auction{% endblock %}
+
+{# Set active page variable for layout #}
+{% set active_page = 'auctions' %}
+
+{% block content %}
+<div class="main-container auction-page-container"> {# Added specific class #}
+
+    {# Check authentication AND correct role #}
+    {% if current_user.is_authenticated and current_user.role in ['Admin', 'Super Admin'] %}
+    <div class="auction-admin-panel layout-e4f0bf-admin"> {# Admin controls box #}
+        <h3>Admin Controls {% if auction_started or round_complete %}(Round {{ auction_round }}){% endif %}</h3>
+        <div class="admin-buttons-group">
+            {% if auction_paused %}
+                <a href="{{ url_for('resume_auction') }}" class="admin-action-btn resume-btn"><i class="fas fa-play"></i> Resume Auction</a>
+            {% elif round_complete and next_round_players_count > 0 %}
+                <a href="{{ url_for('start_next_round') }}" class="admin-action-btn next-round-btn">Start Round {{ auction_round + 1 }} ({{next_round_players_count}} players)</a>
+            {% elif auction_started %}
+                 <a href="{{ url_for('next_player') }}" class="admin-action-btn next-player-btn">Next Player <i class="fas fa-forward"></i></a>
+                 <form method="POST" action="{{ url_for('pause_auction') }}">
+                     <button type="submit" class="admin-action-btn pause-btn"><i class="fas fa-pause"></i> Pause Auction</button>
+                 </form>
+            {% else %}
+                 <a href="{{ url_for('next_player') }}" class="admin-action-btn start-btn">
+                    {% if auction_complete %} Start New Auction {% else %} Start Auction {% endif %} <i class="fas fa-gavel"></i>
+                </a>
+                <a href="{{ url_for('restart_auction') }}" class="admin-action-btn reset-btn">Reset Auction Data <i class="fas fa-undo"></i></a>
+            {% endif %}
+            {# Show Reset button also when paused or round complete #}
+            {% if auction_paused or round_complete %}
+                 <a href="{{ url_for('restart_auction') }}" class="admin-action-btn reset-btn">Reset Auction Data <i class="fas fa-undo"></i></a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {# --- End of Admin Panel --- #}
+
+    {# --- PLAYER COUNT SUMMARY (SEPARATE CARD) --- #}
+    <div class="auction-player-summary">
+        <div class="summary-box">
+            <span class="summary-label">Total Pool</span>
+            <span class="summary-value">{{ total_auction_players }}</span>
+        </div>
+        <div class="summary-box sold">
+            <span class="summary-label">Sold</span>
+            <span class="summary-value">{{ sold_players_count }}</span>
+        </div>
+         <div class="summary-box available">
+            <span class="summary-label">Available Now</span>
+            <span class="summary-value">{{ currently_unsold_count }}</span>
+        </div>
+        <div class="summary-box unsold">
+            <span class="summary-label">Marked Unsold</span>
+            <span class="summary-value">{{ marked_unsold_count }}</span>
+        </div>
+    </div>
+    {# --- END PLAYER COUNT SUMMARY --- #}
+
+
+    {# Show player card only if auction is active AND not paused #}
+    {% if auction_started and player and not auction_paused %}
+        
+        <div class="auction-player-card-v3">
+
+            <div class="player-left-column">
+                <div class="player-card-photo">
+                    <img class="auction-page-player-img" src="{{ url_for('static', filename='images/' + (player.image_filename if player.image_filename else 'default_player.png')) }}" alt="{{ player.player_name }}">
+                </div>
+                
+                {% if current_user.is_authenticated and current_user.role in ['Admin', 'Super Admin'] %}
+                <div class="player-card-actions" id="auctionActionsBlock">
+                    <button type="button" class="status-btn sold-btn" id="soldBtnTrigger"><i class="fas fa-check"></i> Sold</button>
+                    <form method="POST" action="{{ url_for('mark_unsold', player_id=player.id) }}" class="unsold-form" style="width: 100%;">
+                        <button type="submit" class="status-btn unsold-btn" style="width: 100%;"><i class="fas fa-times"></i> Unsold</button>
+                    </form>
+                </div>
+                <form method="POST" action="{{ url_for('mark_sold', player_id=player.id) }}" class="sold-form layout-e4f0bf-sold-form" id="soldForm" style="display: none;">
+                    <div class="sold-inputs">
+                        <select name="team_id" required class="form-select"> <option value="">-- Select Team --</option> {% for team in all_teams %} <option value="{{ team.id }}">{{ team.team_name }}</option> {% endfor %} </select>
+                        <input type="number" name="sold_price" placeholder="Sold Price" required class="form-input">
+                    </div>
+                    <div class="sold-confirm-buttons">
+                        <button type="submit" class="status-btn sold-btn small-btn">Confirm Sold</button>
+                        <button type="button" class="status-btn cancel-btn small-btn" id="cancelSoldBtn">Cancel</button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+            
+            <div class="player-right-column">
+                
+                <div class="player-card-header-right">
+                    <h1 class="player-card-name">{{ player.player_name }}</h1>
+						<div class="player-info-block">
+							<div class="player-info-item">Role: <span>{{ player.role if player.role else 'N/A' }}</span></div>
+							<div class="player-info-item">Last Team: <span>{{ player.last_team if player.last_team else 'N/A' }}</span></div>
+						</div>
+					</div>
+
+                <div class="player-card-key-stats-summary">
+                    <div class="key-stat-box-summary">
+                        <span class="key-stat-label-summary">Matches</span>
+                        <span class="key-stat-value-summary">{{ player.overall_matches if player.overall_matches is not none else '-' }}</span>
+                    </div>
+                    <div class="key-stat-box-summary">
+                        <span class="key-stat-label-summary">Total Runs</span>
+                        <span class="key-stat-value-summary">{{ player.overall_runs if player.overall_runs is not none else '-' }}</span>
+                    </div>
+                    <div class="key-stat-box-summary">
+                        <span class="key-stat-label-summary">Total Wickets</span>
+                        <span class="key-stat-value-summary">{{ player.overall_wickets if player.overall_wickets is not none else '-' }}</span>
+                    </div>
+                </div>
+
+                <div class="player-card-tables">
+                    <div class="stats-table-wrapper">
+                        <h3>Batting Stats (Overall)</h3>
+                         <table class="mini-stats-table">
+                            <thead>
+                                <tr>
+                                    <th>INN</th>
+                                    <th>AVG</th>
+                                    <th>SR</th>
+                                    <th>HS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ player.batting_inn if player.batting_inn is not none else '-' }}</td>
+                                    <td>{{ player.batting_avg if player.batting_avg is not none else '-' }}</td>
+                                    <td>{{ player.overall_sr if player.overall_sr is not none else '-' }}</td>
+                                    <td>{{ player.overall_hs if player.overall_hs is not none else '-' }}</td>
+                                </tr>
+                            </tbody>
+                         </table>
+                    </div>
+                    <div class="stats-table-wrapper">
+                        <h3>Bowling Stats (Overall)</h3>
+                         <table class="mini-stats-table">
+                            <thead>
+                                <tr>
+                                    <th>INN</th>
+                                    <th>AVG</th>
+                                    <th>ECON</th>
+                                    <th>BBI</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ player.bowling_inn if player.bowling_inn is not none else '-' }}</td>
+                                    <td>{{ player.bowling_avg if player.bowling_avg is not none else '-' }}</td>
+                                    <td>{{ player.econ if player.econ is not none else '-' }}</td>
+                                    <td>{{ player.bbi if player.bbi else '-' }}</td>
+                                </tr>
+                            </tbody>
+                         </table>
+                    </div>
+                </div>
+
+            </div> </div> {% else %}
+        <div class="auction-card-simple">
+             <h2 class="page-title"> {% if auction_complete %} Auction Complete {% elif round_complete %} Round {{ auction_round }} Complete {% elif auction_paused %} Auction Paused {% else %} Auction Yet to Start / Paused {% endif %} </h2>
+             <p class="page-subtitle"> {% if auction_complete %} All players processed. Use Admin controls to reset. {% elif round_complete %} Waiting for Admin to start Round {{ auction_round + 1 }}. {% elif auction_paused %} Waiting for Admin to resume. {% else %} The CPL 2025 player auction has not begun or is paused between players. {% endif %} </p>
+        </div>
+    {% endif %}
+
+
+    <section class="auction-dashboard">
+        <h2 class="dashboard-title">Live Auction Dashboard</h2>
+        <div class="dashboard-grid">
+            <div class="dashboard-chart">
+                <h3>Purse Remaining <small>(Max: 10,000)</small></h3>
+                {% for team in all_teams %} <div class="bar-item"> <span class="bar-label">{{ team.team_name }}</span> <div class="bar-track"> <div class="bar-fill purse-bar" style="width: {{ (team.purse / 10000) * 100 }}%;"> <span>{{ "{:,}".format(team.purse) }}</span> </div> </div> </div> {% endfor %}
+            </div>
+            <div class="dashboard-chart">
+                <h3>Slots Remaining <small>(Max: 15)</small></h3>
+                 {% for team in all_teams %} <div class="bar-item"> <span class="bar-label">{{ team.team_name }}</span> <div class="bar-track"> <div class="bar-fill slot-bar" style="width: {{ (team.slots_remaining / 15) * 100 }}%;"> <span>{{ team.slots_remaining }}</span> </div> </div> </div> {% endfor %}
+            </div>
+        </div>
+    </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{# JavaScript for toggling Sold Form #}
+{# Only add script if user is admin AND a player is being shown #}
+{% if current_user.is_authenticated and current_user.role in ['Admin', 'Super Admin'] and player %}
+<script>
+    const soldBtnTrigger = document.getElementById('soldBtnTrigger');
+    const soldForm = document.getElementById('soldForm');
+    const cancelSoldBtn = document.getElementById('cancelSoldBtn');
+    const unsoldForm = document.querySelector('.unsold-form');
+    const auctionActionsBlock = document.getElementById('auctionActionsBlock'); // Get the container
+
+    if (soldBtnTrigger && soldForm && cancelSoldBtn && unsoldForm && auctionActionsBlock) {
+        soldBtnTrigger.addEventListener('click', () => {
+            soldForm.style.display = 'flex';
+            auctionActionsBlock.classList.add('form-visible'); // Add class to hide initial buttons
+        });
+
+        cancelSoldBtn.addEventListener('click', () => {
+            soldForm.style.display = 'none';
+            auctionActionsBlock.classList.remove('form-visible'); // Remove class to show initial buttons
+        });
+    }
+</script>
+{% endif %}
+{% endblock %}

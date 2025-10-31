@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+{% block title %}CPL 2025 - Players{% endblock %}
+
+{# Set active page variable for layout #}
+{% set active_page = 'players' %}
+
+{% block content %}
+<div class="main-container">
+    <h2 class="page-title">CPL 2025 Player List</h2>
+
+    <div class="filter-buttons">
+        <button class="filter-btn active" data-filter="all">Show All</button>
+        <button class="filter-btn" data-filter="retained">Show Retained</button>
+        <button class="filter-btn" data-filter="auction">Show Auction Pool</button>
+        <button class="filter-btn" data-filter="sold">Show Sold (Auction)</button>
+        <button class="filter-btn" data-filter="unsold">Show Unsold (Auction)</button>
+    </div>
+
+    <div class="player-table-card">
+
+        <div class="player-table-grid player-header new-player-grid"> {# Added new class #}
+             <div class="header-cell player-name-header">PLAYER</div>
+             <div class="header-cell main-header bat-stats-header">BATTING (Overall)</div>
+             <div class="header-cell main-header bowl-stats-header">BOWLING (Overall)</div>
+             
+             {# Batting Sub-headers (6 columns) #}
+             <div class="header-cell sub-header ovr-matches">MAT</div>
+             <div class="header-cell sub-header bat-inn">INN</div>
+             <div class="header-cell sub-header ovr-runs">RUNS</div>
+             <div class="header-cell sub-header bat-avg">AVG</div>
+             <div class="header-cell sub-header ovr-sr">SR</div>
+             <div class="header-cell sub-header ovr-hs hs-header">HS</div> {# Border class #}
+             
+             {# Bowling Sub-headers (5 columns) #}
+             <div class="header-cell sub-header bowl-inn">INN</div>
+             <div class="header-cell sub-header ovr-wickets">WKT</div>
+             <div class="header-cell sub-header bowl-avg">AVG</div>
+             <div class="header-cell sub-header bowl-econ">ECON</div>
+             <div class="header-cell sub-header bowl-bbi">BBI</div>
+        </div>
+        {% for player in players %}
+        <div class="player-table-grid player-row new-player-grid"
+             data-status="{% if player.is_retained %}retained{% elif player.status == 'Sold' %}sold{% else %}unsold{% endif %}">
+
+<div class="data-cell player-name">
+                {{ player.player_name }}
+                {# <span class="player-role-badge">{{ player.role }}</span> -- REMOVED -- #}
+                {% if player.is_retained and player.team %}
+                    <span class="retained-badge">Retained by {{ player.team.team_name }}</span>
+                {% endif %}
+            </div>
+            {# Batting Data (6 columns) #}
+            <div class="data-cell">{{ player.overall_matches if player.overall_matches is not none else '-' }}</div>
+            <div class="data-cell">{{ player.batting_inn if player.batting_inn is not none else '-' }}</div>
+            <div class="data-cell">{{ player.overall_runs if player.overall_runs is not none else '-' }}</div>
+            <div class="data-cell">{{ player.batting_avg if player.batting_avg is not none else '-' }}</div>
+            <div class="data-cell">{{ player.overall_sr if player.overall_sr is not none else '-' }}</div>
+            <div class="data-cell hs-cell">{{ player.overall_hs if player.overall_hs is not none else '-' }}</div>
+            
+            {# Bowling Data (5 columns) #}
+            <div class="data-cell">{{ player.bowling_inn if player.bowling_inn is not none else '-' }}</div>
+            <div class="data-cell">{{ player.overall_wickets if player.overall_wickets is not none else '-' }}</div>
+            <div class="data-cell">{{ player.bowling_avg if player.bowling_avg is not none else '-' }}</div>
+            <div class="data-cell">{{ player.econ if player.econ is not none else '-' }}</div>
+            <div class="data-cell">{{ player.bbi if player.bbi else '-' }}</div>
+        </div>
+        {% endfor %}
+
+    </div> </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.querySelectorAll('.filter-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            const filterValue = button.getAttribute('data-filter');
+            document.querySelectorAll('.player-row').forEach(row => {
+                const rowStatus = row.getAttribute('data-status');
+                const isRetained = (rowStatus === 'retained');
+                let showRow = false;
+                if (filterValue === 'all') { showRow = true; }
+                else if (filterValue === 'auction') { showRow = !isRetained; }
+                else if (filterValue === rowStatus) { showRow = true; }
+                row.style.display = showRow ? 'grid' : 'none';
+            });
+        });
+    });
+</script>
+{% endblock %}

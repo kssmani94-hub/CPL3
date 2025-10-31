@@ -1,0 +1,125 @@
+{% extends "layout.html" %}
+{% block title %}CPL 2025 - Teams{% endblock %}
+
+{# Set active page variable for layout #}
+{% set active_page = 'teams' %}
+
+{% block content %}
+<div class="main-container">
+    <h2 class="page-title">CPL 2025 Team Status</h2>
+    <p class="page-subtitle">Total Purse per Team: 10,000 Points | Max Players: 15</p>
+
+    <div class="table-container">
+        <table class="team-status-table">
+            <thead>
+                <tr>
+                    <th>Team Name</th>
+                    <th>Captain</th>
+                    <th>Purse Spent</th>
+                    <th>Purse Remaining</th>
+                    <th>Players</th>
+                    <th>Slots Left</th>
+                    {# Show Actions column only if user is logged in #}
+                    {% if current_user.is_authenticated %}
+                        <th>Actions</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for team in teams %}
+                <tr class="team-data-row"> {# Add class for easier JS selection #}
+                    <td data-label="Team Name">{{ team.team_name }}</td>
+                    <td data-label="Captain">{{ team.captain_name }}</td>
+                    <td data-label="Purse Spent">{{ "{:,}".format(team.purse_spent) }}</td>
+                    <td data-label="Purse Remaining">{{ "{:,}".format(team.purse) }}</td>
+                    <td data-label="Players">{{ team.players_taken_count }}</td>
+                    <td data-label="Slots Left">{{ team.slots_remaining }}</td>
+                    {% if current_user.is_authenticated %}
+                        <td data-label="Actions">
+                            {# Check if there are ANY players (retained or bought) #}
+                            {% if team.players.count() > 0 %}
+                                <button class="view-players-btn icon-btn" data-teamid="{{ team.id }}" title="View Players">
+                                    <i class="fas fa-eye"></i> {# Eye icon #}
+                                </button>
+                            {% else %}
+                                <span class="no-players">-</span> {# Use dash for alignment #}
+                            {% endif %}
+                        </td>
+                    {% endif %}
+                </tr>
+                <tr class="player-list-row" id="players-{{ team.id }}" style="display: none;">
+                     <td colspan="{% if current_user.is_authenticated %}7{% else %}6{% endif %}">
+                        <div class="player-list-details">
+                            {# Separate lists for Retained and Auction Buys #}
+                            {% set retained = team.players.filter_by(is_retained=True).order_by(Player.player_name).all() %}
+                            {% set bought = team.players.filter_by(is_retained=False).order_by(Player.sold_price.desc()).all() %}
+
+                            {% if retained %}
+                            <h4>Retained Players:</h4>
+                            <ul class="player-name-list retained-list">
+                                {% for player in retained %}
+                                    <li>{{ player.player_name }} <span>(Retained - {{ "{:,}".format(player.sold_price) }} pts)</span></li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+
+                            {% if bought %}
+                            <h4>Auction Buys:</h4>
+                            <ul class="player-name-list bought-list">
+                                {% for player in bought %}
+                                    <li>{{ player.player_name }} <span>({{ "{:,}".format(player.sold_price) }} points)</span></li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+
+                            {% if not retained and not bought %}
+                            <p>No players acquired yet.</p>
+                            {% endif %}
+
+                            {# Show Export button if there are players #}
+                            {% if current_user.is_authenticated and (retained or bought) %}
+                                <a href="{{ url_for('export_team_excel', team_id=team.id) }}" class="export-btn">
+                                   <i class="fas fa-file-excel"></i> Export Team
+                                </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    document.querySelectorAll('.view-players-btn').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const teamId = button.getAttribute('data-teamid');
+            const playerRow = document.getElementById(`players-${teamId}`);
+            const icon = button.querySelector('i'); // Get the icon element
+
+            if (playerRow) {
+                if (playerRow.style.display === 'none') {
+                    // Show the row
+                    playerRow.style.display = 'table-row';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash'); // Change to 'hide' icon
+                    button.setAttribute('title', 'Hide Players');
+                    // Smooth scroll to the revealed row
+                    playerRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    // Hide the row
+                    playerRow.style.display = 'none';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye'); // Change back to 'view' icon
+                     button.setAttribute('title', 'View Players');
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

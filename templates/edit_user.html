@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+{% block title %}Edit User{% endblock %}
+
+{# Set active page variable for layout #}
+{% set active_page = 'dashboard' %} {# Keep dashboard highlighted #}
+
+{% block content %}
+<div class="main-container">
+    <h2 class="page-title">Edit User: {{ user.full_name }}</h2>
+
+    <div class="login-form-container">
+        <h3>Update User Details</h3>
+
+        <form class="login-form" method="POST" action="{{ url_for('edit_user', user_id=user.id) }}">
+
+            <div class="form-group">
+                <label for="full_name">Full Name</label>
+                {# Pre-fill with existing data using 'value=' #}
+                <input type="text" id="full_name" name="full_name" value="{{ user.full_name }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" value="{{ user.username }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">New Password (leave blank to keep current)</label>
+                <input type="password" id="password" name="password"> {# Not required #}
+            </div>
+
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select id="role" name="role" class="form-select">
+                    {# Select the current role #}
+                    <option value="Captain" {% if user.role == 'Captain' %}selected{% endif %}>Captain</option>
+                    <option value="Admin" {% if user.role == 'Admin' %}selected{% endif %}>Admin</option>
+                    <option value="Super Admin" {% if user.role == 'Super Admin' %}selected{% endif %}>Super Admin</option>
+                </select>
+            </div>
+
+            {# Show Team dropdown always, but only use value if role is Captain #}
+            <div class="form-group" id="team_select_group" style="display: {% if user.role == 'Captain' %}block{% else %}none{% endif %};">
+                <label for="team_id">Assign to Team (only applies if Role is Captain)</label>
+                <select id="team_id" name="team_id" class="form-select">
+                    <option value="">None</option>
+                    {% for team in teams %}
+                        {# Select the current team #}
+                        <option value="{{ team.id }}" {% if user.team_id == team.id %}selected{% endif %}>{{ team.team_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="login-btn"><i class="fas fa-save"></i> Save Changes</button>
+            <a href="{{ url_for('dashboard') }}" class="cancel-link">Cancel</a>
+        </form>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{# Add JavaScript to show/hide Team dropdown based on Role selection #}
+<script>
+    const roleSelect = document.getElementById('role');
+    const teamGroup = document.getElementById('team_select_group');
+
+    function toggleTeamSelect() {
+        if (roleSelect.value === 'Captain') {
+            teamGroup.style.display = 'block';
+        } else {
+            teamGroup.style.display = 'none';
+        }
+    }
+    // Run on page load
+    toggleTeamSelect();
+    // Run when role changes
+    roleSelect.addEventListener('change', toggleTeamSelect);
+</script>
+{% endblock %}

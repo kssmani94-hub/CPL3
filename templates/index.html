@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+{% block title %}CPL 2025 - Home{% endblock %}
+
+{# Set active page variable for layout #}
+{% set active_page = 'home' %}
+
+{% block content %}
+<div class="main-container">
+    <div class="home-card">
+<div class="welcome-header">
+            <h2>Welcome to the</h2> {# Updated Text #}
+            <h1>Chidambaram Premier League 2025</h1>
+        </div>
+        <div class="action-buttons">
+            {# Buttons disabled as requested #}
+            <button class="btn" disabled title="Registration Closed">Register Now</button>
+            <button class="btn" disabled title="Check Status Not Implemented">Check Status</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <span>Players in Auction</span> {# Changed Label #}
+                <div class="number">{{ player_count }}</div> {# Shows auction pool count #}
+            </div>
+            <div class="stat-box">
+                <span>Auction Slots Available</span> {# Changed Label #}
+                <div class="number">{{ slots_remaining }}</div> {# Shows total slots for auction #}
+            </div>
+            <div class="stat-box">
+                <span>Teams</span>
+                <div class="number">{{ team_count }}</div>
+            </div>
+            <div class="stat-box">
+                <span>Days to Go</span>
+                <div class="number">{{ days_to_go }}</div>
+            </div>
+        </div>
+
+        <div class="champion-footer">
+            <div class="champion-details">
+                <span>Last year champion</span>
+                APJ Tamizhan Youngstars | Defending Champions, 2024
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="top-performers-section">
+    <div class="main-container">
+        <h2>Top Performers 2024</h2>
+        <div class="performers-grid">
+
+            <div class="performer-card" style="background-image: linear-gradient(to right, #6a11cb 0%, #2575fc 100%);">
+                <div class="player-image">
+                    <img class="top-performer-img" src="{{ url_for('static', filename='images/default_player.png') }}" alt="Top Batsman"> {# Update filename #}
+                </div>
+                <div class="performer-stats">
+                    <div class="stat-title" style="background-color: #1a936f;">TOP BATSMAN</div>
+                    <div class="player-name">Vasanth Ab</div>
+                    <span class="stat-label">Runs</span>
+                    <div class="stat-value">302</div>
+                </div>
+            </div>
+
+            <div class="performer-card" style="background-image: linear-gradient(to right, #d31027 0%, #ea384d 100%);">
+                <div class="player-image">
+                    <img class="top-performer-img" src="{{ url_for('static', filename='images/default_player.png') }}" alt="Top Bowler"> {# Update filename #}
+                </div>
+                <div class="performer-stats">
+                    <div class="stat-title" style="background-color: #118ab2;">TOP BOWLER</div>
+                    <div class="player-name">Gurunathan S</div>
+                    <span class="stat-label">Wickets</span>
+                    <div class="stat-value">21</div>
+                </div>
+            </div>
+
+            <div class="performer-card" style="background-image: linear-gradient(to right, #f7b733 0%, #fc4a1a 100%);">
+                <div class="player-image">
+                    <img class="top-performer-img" src="{{ url_for('static', filename='images/vasanth_ab.png') }}" alt="Player of the Season"> {# Update filename #}
+                </div>
+                <div class="performer-stats">
+                    <div class="stat-title" style="background-color: #8338ec;">PLAYER OF THE SEASON</div>
+                    <div class="player-name">Vasanth AB</div>
+                    <span class="stat-label">Most Valuable Player</span>
+                    <div class="stat-value">MVP</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+{% endblock %}
